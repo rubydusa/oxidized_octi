@@ -1,14 +1,14 @@
-use std::collections::VecDeque;
-use std::str::FromStr;
-use std::fmt::Display;
 use super::*;
+use std::collections::VecDeque;
+use std::fmt::Display;
+use std::str::FromStr;
 
 impl Display for OctiMove {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             OctiMove::Arrow(pos, arr) => {
                 write!(f, "arr {} {}", pos.to_string(), arr.to_string())
-            },
+            }
             OctiMove::Move(pos, arrs) => {
                 let mut arrs_s = String::new();
 
@@ -18,7 +18,7 @@ impl Display for OctiMove {
                 }
 
                 write!(f, "mov {}{}", pos, arrs_s)
-            },
+            }
         }
     }
 }
@@ -68,7 +68,9 @@ impl FromStr for Arrow {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let value = s.parse::<usize>().or(Err(format!("Invalid value: {}", s)))?;
+        let value = s
+            .parse::<usize>()
+            .or(Err(format!("Invalid value: {}", s)))?;
         Arrow::new(value)
     }
 }
@@ -91,16 +93,22 @@ impl FromStr for Position {
         }
 
         if chars.pop_front().unwrap() != '(' || chars.pop_back().unwrap() != ')' {
-            Err(format!("Position does not start or does not end with parentheses: {}", s))?;
+            Err(format!(
+                "Position does not start or does not end with parentheses: {}",
+                s
+            ))?;
         }
 
         let s: String = chars.into_iter().collect();
         let coords: Vec<_> = s.split(',').collect();
 
-        let x = coords[0].parse::<i32>().or(Err(format!("Invalid x: {}", coords[0])))?;
-        let y = coords[1].parse::<i32>().or(Err(format!("Invalid y: {}", coords[1])))?;
+        let x = coords[0]
+            .parse::<i32>()
+            .or(Err(format!("Invalid x: {}", coords[0])))?;
+        let y = coords[1]
+            .parse::<i32>()
+            .or(Err(format!("Invalid y: {}", coords[1])))?;
 
         Ok(Position::new(x, y))
     }
 }
-

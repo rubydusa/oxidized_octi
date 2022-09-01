@@ -73,6 +73,10 @@ pub struct Position(i32, i32);
 pub struct BoardBounds(Position, Position);
 
 impl Board {
+    pub fn bounds(&self) -> BoardBounds {
+        self.bounds
+    }
+
     fn get_octi_by_pos_mut(&mut self, pos: &Position) -> Option<&mut Octi> {
         self.octis.get_mut(self.pos_indexer.get(&pos)?)
     }
@@ -122,7 +126,6 @@ impl BoardEventProcessor for Board {
 
                     let octi = self.get_octi_by_id_mut(&id).unwrap();
                     octi.set_pos(*new_pos);
-
                 }
                 BoardEvent::OctiEaten(pos) => {
                     let octi_id = self.pos_indexer.remove(pos).unwrap();
@@ -150,8 +153,7 @@ impl Default for Board {
                 if id < 4 {
                     let x = id + 1;
                     (Position::new(x, 5), Team::Red)
-                }
-                else {
+                } else {
                     let x = id - 3;
                     (Position::new(x, 1), Team::Green)
                 }
@@ -159,7 +161,10 @@ impl Default for Board {
 
             let id = id as OctiID;
             pos_indexer.insert(pos, id);
-            (id, Octi::new(id, team, pos, [ArrowStatus::Inactive; ARROWS_PER_OCTI]))
+            (
+                id,
+                Octi::new(id, team, pos, [ArrowStatus::Inactive; ARROWS_PER_OCTI]),
+            )
         }));
         let mut arr_counts = BTreeMap::new();
         arr_counts.insert(Team::Red, 12);
@@ -236,8 +241,7 @@ impl Arrow {
     pub fn new(value: usize) -> Result<Arrow, String> {
         if value >= ARROWS_PER_OCTI {
             Err(format!("Invalid arrow value: {}", value))
-        }
-        else {
+        } else {
             Ok(Arrow(value))
         }
     }
@@ -296,6 +300,14 @@ impl ops::Mul<i32> for Position {
 impl BoardBounds {
     pub fn new(lu: Position, rd: Position) -> BoardBounds {
         BoardBounds(lu, rd)
+    }
+
+    pub fn lu(&self) -> Position {
+        self.0
+    }
+
+    pub fn rd(&self) -> Position {
+        self.1
     }
 
     pub fn in_bounds(&self, pos: &Position) -> bool {

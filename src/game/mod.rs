@@ -1,3 +1,5 @@
+mod parse;
+
 use super::board::Board;
 use super::board::BoardEventProcessor;
 use super::board::OctiMove;
@@ -125,5 +127,11 @@ impl Game {
     pub fn set_cursor(&mut self, to: usize) {
         self.cursor_start();
         self.move_cursor_forward(to)
+    }
+}
+
+impl Default for Game {
+    fn default() -> Self {
+        Game::new(Board::default())
     }
 }

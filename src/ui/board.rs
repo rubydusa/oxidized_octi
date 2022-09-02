@@ -2,13 +2,27 @@ use tui::style::{Color, Style};
 use tui::text::{Span, Spans};
 use tui::widgets::Widget;
 
-use super::super::board::{Arrow, Board, Boardable, Octi, Position, Team};
+use super::super::board::{Board, Boardable, Position, Team};
 use super::symbols;
 
 const CELL_WIDTH: u16 = 11;
 const CELL_HEIGHT: u16 = 6;
 
-pub struct BoardUI<'a>(pub &'a Board);
+pub struct BoardUI<'a>(&'a Board);
+
+impl<'a> BoardUI<'a> {
+    pub fn new(board: &'a Board) -> BoardUI<'a> {
+        BoardUI(board)
+    }
+
+    pub fn height(&self) -> u16 {
+        self.0.bounds().height() as u16 * CELL_HEIGHT + 1
+    }
+
+    pub fn width(&self) -> u16 {
+        self.0.bounds().width() as u16 * CELL_WIDTH + 1
+    }
+}
 
 impl<'a> Widget for BoardUI<'a> {
     fn render(self, area: tui::layout::Rect, buf: &mut tui::buffer::Buffer) {
@@ -35,7 +49,7 @@ impl<'a> Widget for BoardUI<'a> {
         );
 
         for x in x1..=x2 {
-            for y in y1..y2 {
+            for y in y1..=y2 {
                 let x_buf = x as u16 * CELL_WIDTH + area.x;
                 let y_buf = y as u16 * CELL_HEIGHT + area.y;
 
@@ -64,10 +78,11 @@ impl<'a> Widget for BoardUI<'a> {
                         x_buf,
                         y_buf + 1,
                         &Span::raw(format!(
-                            "│  {} {} {}  ",
-                            arrow_symbol(octi, 3, "╲", " "),
-                            arrow_symbol(octi, 2, "▕▏", "  "),
-                            arrow_symbol(octi, 1, "╱", " "),
+                            "{}  {} {} {}  ",
+                            symbols::VERTICAL_LINE,
+                            symbols::arrow_symbol(octi, 3),
+                            symbols::arrow_symbol(octi, 2),
+                            symbols::arrow_symbol(octi, 1),
                         )),
                         CELL_WIDTH,
                     );
@@ -76,8 +91,8 @@ impl<'a> Widget for BoardUI<'a> {
                         x_buf,
                         y_buf + 2,
                         &Spans::from(vec![
-                            Span::raw("│   "),
-                            Span::styled("╱▔▔╲", team_style),
+                            Span::raw([symbols::VERTICAL_LINE, "   "].concat()),
+                            Span::styled(symbols::OCTI_TOP, team_style),
                             Span::raw("  "),
                         ]),
                         CELL_WIDTH,
@@ -87,14 +102,18 @@ impl<'a> Widget for BoardUI<'a> {
                         x_buf,
                         y_buf + 3,
                         &Spans::from(vec![
-                            Span::raw(format!("│ {}", arrow_symbol(octi, 4, "──", "  "))),
-                            Span::styled("▏", team_style),
+                            Span::raw(format!(
+                                "{} {}",
+                                symbols::VERTICAL_LINE,
+                                symbols::arrow_symbol(octi, 4)
+                            )),
+                            Span::styled(symbols::OCTI_LEFT_SIDE, team_style),
                             Span::raw(match team {
-                                Team::Red => "╱╲",
-                                Team::Green => "╲╱",
+                                Team::Red => symbols::RED_OCTI_ARROW,
+                                Team::Green => symbols::GREEN_OCTI_ARROW,
                             }),
-                            Span::styled("▕", team_style),
-                            Span::raw(format!("{} ", arrow_symbol(octi, 0, "──", "  "))),
+                            Span::styled(symbols::OCTI_RIGHT_SIDE, team_style),
+                            Span::raw(format!("{} ", symbols::arrow_symbol(octi, 0))),
                         ]),
                         CELL_WIDTH,
                     );
@@ -103,8 +122,8 @@ impl<'a> Widget for BoardUI<'a> {
                         x_buf,
                         y_buf + 4,
                         &Spans::from(vec![
-                            Span::raw("│   "),
-                            Span::styled("╲▁▁╱", team_style),
+                            Span::raw([symbols::VERTICAL_LINE, "   "].concat()),
+                            Span::styled(symbols::OCTI_BOTTOM, team_style),
                             Span::raw("  "),
                         ]),
                         CELL_WIDTH,
@@ -115,9 +134,9 @@ impl<'a> Widget for BoardUI<'a> {
                         y_buf + 5,
                         &Span::raw(format!(
                             "│  {} {} {}  ",
-                            arrow_symbol(octi, 5, "╱", " "),
-                            arrow_symbol(octi, 6, "▕▏", "  "),
-                            arrow_symbol(octi, 7, "╲", " "),
+                            symbols::arrow_symbol(octi, 5),
+                            symbols::arrow_symbol(octi, 6),
+                            symbols::arrow_symbol(octi, 7),
                         )),
                         CELL_WIDTH,
                     );
@@ -128,19 +147,37 @@ impl<'a> Widget for BoardUI<'a> {
                 }
             }
         }
-    }
-}
 
-fn arrow_symbol(
-    octi: &Octi,
-    arr: usize,
-    if_exists: &'static str,
-    if_not: &'static str,
-) -> &'static str {
-    if octi.has_arr(&Arrow::new(arr).unwrap()) {
-        if_exists
-    } else {
-        if_not
-    }
-}
+        let (min_x, min_y) = (area.x, area.y);
+        let (max_x, max_y) = (
+            (x2 + 1) as u16 * CELL_WIDTH + min_x,
+            (y2 + 1) as u16 * CELL_HEIGHT + min_y,
+        );
 
+        for x in min_x..max_x {
+            let symbol = {
+                if x == min_x {
+                    symbols::RIGHT_UP_EDGE
+                } else if (x - min_x) % CELL_WIDTH == 0 {
+                    symbols::DOWN_BORDER
+                } else {
+                    symbols::HORIZONTAL_LINE
+                }
+            };
+            buf.get_mut(x, max_y).set_symbol(symbol);
+        }
+        for y in min_y..max_y {
+            let symbol = {
+                if y == min_y {
+                    symbols::LEFT_DOWN_EDGE
+                } else if (y - min_y) % CELL_HEIGHT == 0 {
+                    symbols::RIGHT_BORDER
+                } else {
+                    symbols::VERTICAL_LINE
+                }
+            };
+            buf.get_mut(max_x, y).set_symbol(symbol);
+        }
+        buf.get_mut(max_x, max_y).set_symbol(symbols::LEFT_UP_EDGE);
+    }
+} 

@@ -106,6 +106,10 @@ impl Boardable for Board {
     fn turn(&self) -> Team {
         self.turn
     }
+
+    fn turn_mut(&mut self) -> &mut Team {
+        &mut self.turn
+    }
 }
 
 impl BoardEventProcessor for Board {
@@ -310,6 +314,14 @@ impl BoardBounds {
         self.1
     }
 
+    pub fn height(&self) -> i32 {
+        self.1.y() - self.0.y() + 1
+    }
+
+    pub fn width(&self) -> i32 {
+        self.1.x() - self.0.x() + 1
+    }
+
     pub fn in_bounds(&self, pos: &Position) -> bool {
         self.0.x() <= pos.x()
             && pos.x() <= self.1.x()
@@ -336,6 +348,7 @@ pub trait Boardable {
     fn get_arr_count(&self, team: &Team) -> Option<u32>;
     fn in_bounds(&self, pos: &Position) -> bool;
     fn turn(&self) -> Team;
+    fn turn_mut(&mut self) -> &mut Team;
 }
 
 pub trait BoardEventProcessor: Boardable {
@@ -444,6 +457,10 @@ pub trait BoardEventProcessor: Boardable {
     fn make_move(&mut self, octi_move: &OctiMove) -> Result<(), String> {
         let board_events = self.move_events(octi_move)?;
         self.process_events(&board_events);
+        *self.turn_mut() = match self.turn() {
+            Team::Red => Team::Green,
+            Team::Green => Team::Red,
+        };
         Ok(())
     }
 }

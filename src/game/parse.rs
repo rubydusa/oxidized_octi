@@ -10,36 +10,34 @@ impl FromStr for Action {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let args: Vec<&str> = s.split(" ").collect();
+        let args: Vec<&str> = s.split(' ').collect();
 
-        if args.len() == 0 {
+        if args.is_empty() {
             return Err(String::from("Empty string"));
         };
 
         match args[0] {
-            "start" => {
-                Ok(Action::Start)
-            },
-            "end" => {
-                Ok(Action::End)
-            },
+            "start" => Ok(Action::Start),
+            "end" => Ok(Action::End),
             "forward" => {
                 if args.len() != 2 {
                     Err(format!("Invalid number of arguments: {}", args.len()))?;
                 }
 
-                Ok(Action::Forward(args[1].parse().or(Err("Invalid forward argument"))?))
-            },
+                Ok(Action::Forward(
+                    args[1].parse().or(Err("Invalid forward argument"))?,
+                ))
+            }
             "backward" => {
                 if args.len() != 2 {
                     Err(format!("Invalid number of arguments: {}", args.len()))?;
                 }
 
-                Ok(Action::Forward(args[1].parse().or(Err("Invalid backward argument"))?))
-            },
-            "move" => {
-                Ok(Action::OctiMove(args[1..].join(" ").parse::<OctiMove>()?))
+                Ok(Action::Forward(
+                    args[1].parse().or(Err("Invalid backward argument"))?,
+                ))
             }
+            "move" => Ok(Action::OctiMove(args[1..].join(" ").parse::<OctiMove>()?)),
             _ => Err(format!("Unrecognized move type: {}", args[0])),
         }
     }

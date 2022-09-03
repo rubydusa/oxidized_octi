@@ -10,13 +10,14 @@ use crossterm::{
 use std::io;
 use tui::{
     backend::{Backend, CrosstermBackend},
-    layout::{Constraint, Direction, Layout, Rect},
-    widgets::{Borders, Block, Paragraph},
-    Frame, Terminal, style::{Style, Modifier, Color},
+    layout::Rect,
+    style::{Color, Modifier, Style},
+    widgets::{Block, Borders, Paragraph},
+    Frame, Terminal,
 };
 
-use super::game::{Action, Game};
 use super::board::Board;
+use super::game::{Action, Game};
 
 struct App {
     input: String,
@@ -57,22 +58,26 @@ fn game_loop<B: Backend>(terminal: &mut Terminal<B>) -> Result<(), io::Error> {
                     let action = input.parse::<Action>();
                     match action {
                         Ok(action) => match app.game.process_action(action) {
-                            Err(message) => { app.message = message; },
-                            _ => { app.message.clear() }
+                            Err(message) => {
+                                app.message = message;
+                            }
+                            _ => app.message.clear(),
                         },
-                        Err(message) => { app.message = message; }
+                        Err(message) => {
+                            app.message = message;
+                        }
                     }
-                },
+                }
                 KeyCode::Char(c) => {
                     app.input.push(c);
-                },
+                }
                 KeyCode::Backspace => {
                     app.input.pop();
-                },
+                }
                 KeyCode::Esc => {
                     return Ok(());
                 }
-                _ => {},
+                _ => {}
             }
         }
     }
@@ -85,23 +90,23 @@ fn render<B: Backend>(f: &mut Frame<B>, app: &App) {
     f.render_widget(board_ui, layout[0]);
 
     let input = Paragraph::new(app.input.as_ref())
-    .block(Block::default().borders(Borders::ALL).title("Move"));
+        .block(Block::default().borders(Borders::ALL).title("Move"));
 
     f.render_widget(input, layout[1]);
-    
-    let message = Paragraph::new(app.message.as_ref())
-        .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD));
+
+    let message = Paragraph::new(app.message.as_ref()).style(
+        Style::default()
+            .fg(Color::Yellow)
+            .add_modifier(Modifier::BOLD),
+    );
 
     f.render_widget(message, layout[2]);
-    f.set_cursor(
-        layout[1].x + app.input.len() as u16 + 1,
-        layout[1].y + 1,
-    );
+    f.set_cursor(layout[1].x + app.input.len() as u16 + 1, layout[1].y + 1);
 }
 
 fn build_layout(width: u16, board_ui: &board::BoardUI) -> Vec<Rect> {
     let (board_width, board_height) = (board_ui.width(), board_ui.height());
-    
+
     let x = (width - board_width) / 2;
     let mut vstack = layouts::VStackLayout::new(x, 0, board_width);
 

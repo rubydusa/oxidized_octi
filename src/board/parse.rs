@@ -7,7 +7,7 @@ impl Display for OctiMove {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             OctiMove::Arrow(pos, arr) => {
-                write!(f, "arr {} {}", pos.to_string(), arr.to_string())
+                write!(f, "arr {} {}", pos, arr.to_string())
             }
             OctiMove::Move(pos, arrs) => {
                 let mut arrs_s = String::new();
@@ -27,9 +27,9 @@ impl FromStr for OctiMove {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let args: Vec<&str> = s.split(" ").collect();
+        let args: Vec<&str> = s.split(' ').collect();
 
-        if args.len() == 0 {
+        if args.is_empty() {
             return Err(String::from("Empty string"));
         };
 
@@ -70,7 +70,7 @@ impl FromStr for Arrow {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let value = s
             .parse::<usize>()
-            .or(Err(format!("Invalid value: {}", s)))?;
+            .map_err(|_| format!("Invalid value: {}", s))?;
         Arrow::new(value)
     }
 }
@@ -104,10 +104,10 @@ impl FromStr for Position {
 
         let x = coords[0]
             .parse::<i32>()
-            .or(Err(format!("Invalid x: {}", coords[0])))?;
+            .map_err(|_| format!("Invalid x: {}", coords[0]))?;
         let y = coords[1]
             .parse::<i32>()
-            .or(Err(format!("Invalid y: {}", coords[1])))?;
+            .map_err(|_| format!("Invalid y: {}", coords[1]))?;
 
         Ok(Position::new(x, y))
     }

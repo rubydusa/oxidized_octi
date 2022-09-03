@@ -99,7 +99,7 @@ impl Game {
     pub fn move_cursor_forward(&mut self, by: usize) {
         let new_cursor = std::cmp::min(self.cursor + by, self.history.len());
         for i in self.cursor..new_cursor {
-            self.state.make_move(&self.history[i]);
+            self.state.make_move(&self.history[i]).unwrap();
         }
 
         self.cursor = new_cursor;
@@ -110,7 +110,7 @@ impl Game {
 
         self.state = self.start.clone();
         for i in 0..new_cursor {
-            self.state.make_move(&self.history[i]);
+            self.state.make_move(&self.history[i]).unwrap();
         }
 
         self.cursor = new_cursor;

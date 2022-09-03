@@ -1,37 +1,37 @@
 use super::super::board::{Arrow, Octi};
 
-pub const HORIZONTAL_LINE: &'static str = "─";
-pub const VERTICAL_LINE: &'static str = "│";
+pub const HORIZONTAL_LINE: &str = "─";
+pub const VERTICAL_LINE: &str = "│";
 
-pub const RIGHT_UP_EDGE: &'static str = "└";
-pub const RIGHT_DOWN_EDGE: &'static str = "┌";
-pub const LEFT_UP_EDGE: &'static str = "┘";
-pub const LEFT_DOWN_EDGE: &'static str = "┐";
+pub const RIGHT_UP_EDGE: &str = "└";
+pub const RIGHT_DOWN_EDGE: &str = "┌";
+pub const LEFT_UP_EDGE: &str = "┘";
+pub const LEFT_DOWN_EDGE: &str = "┐";
 
-pub const RIGHT_BORDER: &'static str = "┤";
-pub const LEFT_BORDER: &'static str = "├";
-pub const UP_BORDER: &'static str = "┬";
-pub const DOWN_BORDER: &'static str = "┴";
+pub const RIGHT_BORDER: &str = "┤";
+pub const LEFT_BORDER: &str = "├";
+pub const UP_BORDER: &str = "┬";
+pub const DOWN_BORDER: &str = "┴";
 
-pub const INTERSECTION: &'static str = "┼";
+pub const INTERSECTION: &str = "┼";
 
-pub const OCTI_TOP: &'static str = "╱▔▔╲";
-pub const OCTI_BOTTOM: &'static str = "╲▁▁╱";
-pub const OCTI_RIGHT_SIDE: &'static str = "▕";
-pub const OCTI_LEFT_SIDE: &'static str = "▏";
+pub const OCTI_TOP: &str = "╱▔▔╲";
+pub const OCTI_BOTTOM: &str = "╲▁▁╱";
+pub const OCTI_RIGHT_SIDE: &str = "▕";
+pub const OCTI_LEFT_SIDE: &str = "▏";
 
-pub const RED_OCTI_ARROW: &'static str = "╱╲";
-pub const GREEN_OCTI_ARROW: &'static str = "╲╱";
+pub const RED_OCTI_ARROW: &str = "╱╲";
+pub const GREEN_OCTI_ARROW: &str = "╲╱";
 
-const HORIZONTAL_ARROW: &'static str = "──";
-const VERTICAL_LINE_ARROW: &'static str = "▕▏";
-const RIGHT_SLANTED_ARROW: &'static str = "╱";
-const LEFT_SLANTED_ARROW: &'static str = "╲";
+const HORIZONTAL_ARROW: &str = "──";
+const VERTICAL_LINE_ARROW: &str = "▕▏";
+const RIGHT_SLANTED_ARROW: &str = "╱";
+const LEFT_SLANTED_ARROW: &str = "╲";
 
-const NO_HORIZONTAL_ARROW: &'static str = "  ";
-const NO_VERTICAL_LINE_ARROW: &'static str = "  ";
-const NO_RIGHT_SLANTED_ARROW: &'static str = " ";
-const NO_LEFT_SLANTED_ARROW: &'static str = " ";
+const NO_HORIZONTAL_ARROW: &str = "  ";
+const NO_VERTICAL_LINE_ARROW: &str = "  ";
+const NO_RIGHT_SLANTED_ARROW: &str = " ";
+const NO_LEFT_SLANTED_ARROW: &str = " ";
 
 pub fn arrow_symbol(octi: &Octi, arr: usize) -> &'static str {
     if octi.has_arr(&Arrow::new(arr).unwrap()) {

@@ -13,7 +13,7 @@ impl VStackLayout {
             x,
             y_offset,
             width,
-            areas: Vec::new()
+            areas: Vec::new(),
         }
     }
 

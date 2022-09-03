@@ -30,7 +30,7 @@ impl<'a> Widget for BoardUI<'a> {
         let (lu, rd) = (bounds.lu(), bounds.rd());
         let (x1, x2, y1, y2) = (lu.x(), rd.x(), lu.y(), rd.y());
         // normalize
-        let (x1, x2, y1, y2) = (x1 - x1, x2 - x1, y1 - y1, y2 - y1);
+        let (x1, x2, y1, y2) = (0, x2 - x1, 0, y2 - y1);
 
         let horizontal_line = symbols::HORIZONTAL_LINE.repeat((CELL_WIDTH - 1) as usize);
 
@@ -180,4 +180,4 @@ impl<'a> Widget for BoardUI<'a> {
         }
         buf.get_mut(max_x, max_y).set_symbol(symbols::LEFT_UP_EDGE);
     }
-} 
+}

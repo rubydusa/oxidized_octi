@@ -78,7 +78,7 @@ impl Board {
     }
 
     fn get_octi_by_pos_mut(&mut self, pos: &Position) -> Option<&mut Octi> {
-        self.octis.get_mut(self.pos_indexer.get(&pos)?)
+        self.octis.get_mut(self.pos_indexer.get(pos)?)
     }
 
     fn get_octi_by_id_mut(&mut self, id: &OctiID) -> Option<&mut Octi> {
@@ -88,15 +88,15 @@ impl Board {
 
 impl Boardable for Board {
     fn get_octi_by_pos(&self, pos: &Position) -> Option<&Octi> {
-        self.get_octi_by_id(self.pos_indexer.get(&pos)?)
+        self.get_octi_by_id(self.pos_indexer.get(pos)?)
     }
 
     fn get_octi_by_id(&self, id: &OctiID) -> Option<&Octi> {
-        self.octis.get(&id)
+        self.octis.get(id)
     }
 
     fn get_arr_count(&self, team: &Team) -> Option<u32> {
-        Some(*self.arr_counts.get(&team)?)
+        Some(*self.arr_counts.get(team)?)
     }
 
     fn in_bounds(&self, pos: &Position) -> bool {
@@ -107,13 +107,13 @@ impl Boardable for Board {
         self.turn
     }
 
-    fn turn_mut(&mut self) -> &mut Team {
-        &mut self.turn
+    fn set_turn(&mut self, turn: Team) {
+        self.turn = turn;
     }
 }
 
 impl BoardEventProcessor for Board {
-    fn process_events(&mut self, board_events: &Vec<BoardEvent>) {
+    fn process_events(&mut self, board_events: &[BoardEvent]) {
         for event in board_events {
             match event {
                 BoardEvent::NewArrow(pos, arr) => {
@@ -348,7 +348,7 @@ pub trait Boardable {
     fn get_arr_count(&self, team: &Team) -> Option<u32>;
     fn in_bounds(&self, pos: &Position) -> bool;
     fn turn(&self) -> Team;
-    fn turn_mut(&mut self) -> &mut Team;
+    fn set_turn(&mut self, turn: Team);
 }
 
 pub trait BoardEventProcessor: Boardable {
@@ -426,14 +426,12 @@ pub trait BoardEventProcessor: Boardable {
                         Err(format!("Positions not in bounds: {:?}", next_pos))?;
                     }
 
-                    let in_between_octi = self.get_octi_by_pos(&in_between_pos);
-                    if in_between_octi.is_none() {
-                        Err(format!("No in-between octi at: {:?}", in_between_pos))?;
-                    } else {
-                        let in_between_octi = in_between_octi.unwrap();
+                    if let Some(in_between_octi) = self.get_octi_by_pos(&in_between_pos) {
                         if in_between_octi.team() != team {
                             board_events.push(BoardEvent::OctiEaten(in_between_pos))
                         }
+                    } else {
+                        Err(format!("No in-between octi at: {:?}", in_between_pos))?;
                     }
 
                     let next_pos_octi = self.get_octi_by_pos(&next_pos);
@@ -452,15 +450,15 @@ pub trait BoardEventProcessor: Boardable {
         }
     }
 
-    fn process_events(&mut self, board_events: &Vec<BoardEvent>);
+    fn process_events(&mut self, board_events: &[BoardEvent]);
 
     fn make_move(&mut self, octi_move: &OctiMove) -> Result<(), String> {
         let board_events = self.move_events(octi_move)?;
         self.process_events(&board_events);
-        *self.turn_mut() = match self.turn() {
+        self.set_turn(match self.turn() {
             Team::Red => Team::Green,
             Team::Green => Team::Red,
-        };
+        });
         Ok(())
     }
 }

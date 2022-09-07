@@ -27,6 +27,7 @@ pub enum BoardEvent {
     NewArrow(Position, Arrow),
     NewOctiPosition(Position, Position),
     OctiEaten(Position),
+    Div, // optional divider signifying end of intermidiary move
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, PartialOrd, Ord, Hash)]
@@ -55,7 +56,7 @@ pub struct Board {
     next_id: OctiID,
 }
 
-#[derive(Clone, Copy, Hash)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq)]
 pub struct Octi {
     id: OctiID,
     team: Team,
@@ -142,6 +143,7 @@ impl BoardEventProcessor for Board {
 
                     *self.arr_counts.get_mut(&other_team).unwrap() += octi.arr_count();
                 }
+                BoardEvent::Div => {}
             }
         }
     }
@@ -287,6 +289,14 @@ impl Position {
     pub fn y(&self) -> i32 {
         self.1
     }
+
+    // Operations
+
+    pub fn abs(self) -> Self {
+        self.0 = self.0.abs();
+        self.1 = self.1.abs();
+        self
+    }
 }
 
 impl ops::Add for Position {
@@ -294,6 +304,14 @@ impl ops::Add for Position {
 
     fn add(self, rhs: Self) -> Self::Output {
         Position::new(self.x() + rhs.x(), self.y() + rhs.y())
+    }
+}
+
+impl ops::Sub for Position {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Position::new(self.x() - rhs.x(), self.y() - rhs.y())
     }
 }
 
@@ -368,7 +386,7 @@ pub trait BoardEventProcessor: Boardable {
         self.move_events(octi_move).is_ok()
     }
 
-    // supposed to be order agnostic
+    // supposed to be chronologically ordered
     fn move_events(&self, octi_move: &OctiMove) -> Result<Vec<BoardEvent>, String> {
         match octi_move {
             OctiMove::Arrow(pos, arr) => {
@@ -432,7 +450,8 @@ pub trait BoardEventProcessor: Boardable {
                     }
                 }
 
-                let mut board_events = Vec::with_capacity(arrs.len());
+                // *3 in case every jump is eat + for every div
+                let mut board_events = Vec::with_capacity(arrs.len() * 3);
 
                 for arr in arrs {
                     if !octi.has_arr(arr) {
@@ -441,6 +460,7 @@ pub trait BoardEventProcessor: Boardable {
 
                     let direction = arr.direction();
 
+                    let previous_pos = next_pos;
                     let in_between_pos = next_pos + direction;
                     next_pos = next_pos + direction * 2;
 
@@ -463,9 +483,10 @@ pub trait BoardEventProcessor: Boardable {
                             next_pos
                         ))?;
                     }
-                }
 
-                board_events.push(BoardEvent::NewOctiPosition(pos, next_pos));
+                    board_events.push(BoardEvent::NewOctiPosition(previous_pos, next_pos));
+                    board_events.push(BoardEvent::Div);
+                }
 
                 Ok(board_events)
             }

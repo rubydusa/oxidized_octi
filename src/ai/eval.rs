@@ -3,12 +3,13 @@ use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 
-use super::super::board::{ArrowStatus, Boardable, Team};
+use super::super::board::{ArrowStatus, BoardEventProcessor, Boardable, OctiMove, Team};
 use super::super::global::ARROWS_PER_OCTI;
 
 use super::board::Board;
 use super::matrix::Matrix;
-use super::{team_win_value, winner, TEAMS};
+use super::moveiter::MoveOctiMoveIterator;
+use super::{team_index, team_win_value, winner, TEAMS};
 
 pub type Value = i32;
 
@@ -50,13 +51,19 @@ pub fn board_eval(board: &Board, eval_data: &EvalData) -> Value {
         let mut board = board.clone();
         board.set_turn(team);
 
-        for octi_mov in MovOctiMoveIterator::new(&board) {
-            let mut board_clone = board.clone();
-            let new_pos = board_clone.make_move(&octi_mov);
-
+        for octi_mov in MoveOctiMoveIterator::new(&board) {
             match octi_mov {
-                OctiMove::Mov(pos, arrs) => {
-                    let octi = board.get(pos).unwrap();
+                OctiMove::Move(pos, arrs) => {
+                    let mut board_clone = board.clone();
+
+                    let octi = board_clone.get_octi_by_pos(&pos).unwrap();
+                    let octi_id = octi.id();
+                    let preivous_pos = octi.pos();
+
+                    board_clone.make_move(&octi_mov);
+
+                    let new_pos = board_clone.get_octi_by_id(&octi_id).unwrap().pos();
+
                     let team = octi.team();
                     let eval = match team {
                         Team::Red => &mut red_eval,
@@ -66,27 +73,22 @@ pub fn board_eval(board: &Board, eval_data: &EvalData) -> Value {
                     // check whether the winner is the original turn team from the original board state
                     // and also that this is a move done by the same team
                     // (opponent team theoretically can do a move which will result in the win of the other, but an optimal opponent won't)
-                    let game_winner = winner(&board_clone);
-                    if game_winner.is_some() {
-                        let game_winner = game_winner.unwrap();
+                    if let Some(game_winner) = winner(&board_clone) {
                         if game_winner == cur_team && game_winner == team {
                             return team_win_value(game_winner);
                         }
                     }
 
-                    let (x, y) = pos;
-                    let (nx, ny) = new_pos;
-                    let (adx, ady) = ((x - nx).abs(), (y - ny).abs()); // absolute difference x, absolute difference y
-                                                                       // simple move
-                    if adx <= 1 && ady <= 1 && arrs.len() == 1 {
-                        let simple_move_matricies = &eval_data.simple_move_matricies[team as usize];
-                        *eval += simple_move_matricies.get(nx as usize, ny as usize).unwrap();
+                    let abs_dif = (new_pos - preivous_pos).abs();
+                    let move_matrix = if abs_dif.x() <= 1 && abs_dif.y() <= 1 && arrs.len() == 1 {
+                        &eval_data.simple_move_matricies[team_index(team)]
                     } else {
-                        let jump_move_matricies = &eval_data.jump_move_matricies[team as usize];
-                        *eval += jump_move_matricies.get(nx as usize, ny as usize).unwrap();
-                    }
+                        &eval_data.jump_move_matricies[team_index(team)]
+                    };
+
+                    *eval += move_matrix.get(&new_pos).unwrap();
                 }
-                _ => panic!("MovOctiMoveIterator returned non mov octi move"),
+                _ => panic!("MoveOctiMoveIterator returned non mov octi move"),
             }
         }
     }

@@ -146,6 +146,7 @@ impl BoardEventProcessor for Board {
 
                     *self.arr_counts.get_mut(team_index(other_team)).unwrap() += octi.arr_count();
                 }
+                BoardEvent::Div => {}
             }
         }
     }

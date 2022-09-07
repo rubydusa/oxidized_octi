@@ -1,5 +1,6 @@
 use std::io;
 
+mod ai;
 mod board;
 mod game;
 mod global;

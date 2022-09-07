@@ -9,8 +9,8 @@ use std::ops;
 // Aliases
 //
 
-type Direction = Position;
-type OctiID = u32;
+pub type Direction = Position;
+pub type OctiID = u32;
 
 //
 // Enums
@@ -29,13 +29,13 @@ pub enum BoardEvent {
     OctiEaten(Position),
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, PartialOrd, Ord)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, PartialOrd, Ord, Hash)]
 pub enum Team {
     Red,
     Green,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub enum ArrowStatus {
     Active,
     Inactive,
@@ -55,7 +55,7 @@ pub struct Board {
     next_id: OctiID,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy, Hash)]
 pub struct Octi {
     id: OctiID,
     team: Team,
@@ -66,7 +66,7 @@ pub struct Octi {
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Arrow(usize);
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, PartialOrd, Ord)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, PartialOrd, Ord, Hash)]
 pub struct Position(i32, i32);
 
 #[derive(Clone, Copy)]
@@ -226,6 +226,10 @@ impl Octi {
         })
     }
 
+    pub fn arr_iter(&self) -> impl Iterator<Item = (usize, &ArrowStatus)> {
+        self.arrs.iter().enumerate()
+    }
+
     // Setters
 
     pub fn add_arr(&mut self, arr: Arrow) {
@@ -301,6 +305,12 @@ impl ops::Mul<i32> for Position {
     }
 }
 
+impl Default for Position {
+    fn default() -> Self {
+        Position::new(0, 0)
+    }
+}
+
 impl BoardBounds {
     pub fn new(lu: Position, rd: Position) -> BoardBounds {
         BoardBounds(lu, rd)
@@ -351,7 +361,14 @@ pub trait Boardable {
     fn set_turn(&mut self, turn: Team);
 }
 
+// BoardEventProcessor process_events isn't responsible for validating events and assumes them to
+// be valid
 pub trait BoardEventProcessor: Boardable {
+    fn is_move_valid(&self, octi_move: &OctiMove) -> bool {
+        self.move_events(octi_move).is_ok()
+    }
+
+    // supposed to be order agnostic
     fn move_events(&self, octi_move: &OctiMove) -> Result<Vec<BoardEvent>, String> {
         match octi_move {
             OctiMove::Arrow(pos, arr) => {
@@ -401,6 +418,11 @@ pub trait BoardEventProcessor: Boardable {
                 let mut next_pos = pos;
 
                 if arrs.len() == 1 {
+                    let arr = arrs[0];
+                    if !octi.has_arr(&arr) {
+                        Err(format!("Arrow {:?} does not exist on {:?}", arr, pos))?;
+                    }
+
                     let direction = arrs[0].direction();
                     let consider_position = next_pos + direction;
                     let consider_position_octi = self.get_octi_by_pos(&consider_position);
@@ -410,7 +432,7 @@ pub trait BoardEventProcessor: Boardable {
                     }
                 }
 
-                let mut board_events = Vec::new();
+                let mut board_events = Vec::with_capacity(arrs.len());
 
                 for arr in arrs {
                     if !octi.has_arr(arr) {

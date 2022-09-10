@@ -292,7 +292,7 @@ impl Position {
 
     // Operations
 
-    pub fn abs(self) -> Self {
+    pub fn abs(mut self) -> Self {
         self.0 = self.0.abs();
         self.1 = self.1.abs();
         self

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
@@ -8,15 +9,19 @@ use super::super::global::ARROWS_PER_OCTI;
 
 use super::board::Board;
 use super::matrix::Matrix;
-use super::moveiter::MoveOctiMoveIterator;
-use super::{team_index, team_win_value, winner, TEAMS};
+use super::moveiter::new_move_octi_move_iterator;
+use super::{team_index, winner, TEAMS};
 
-pub type Value = i32;
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Value {
+    Score(i32),
+    Win(Team),
+}
 
 pub fn board_eval(board: &Board, eval_data: &EvalData) -> Value {
     let game_winner = winner(board);
     match game_winner {
-        Some(game_winner) => return team_win_value(game_winner),
+        Some(game_winner) => return Value::Win(game_winner),
         None => (),
     }
 
@@ -34,7 +39,7 @@ pub fn board_eval(board: &Board, eval_data: &EvalData) -> Value {
         };
 
         *eval += eval_data.octi_value;
-        let arrow_values = &eval_data.arrow_values[team as usize];
+        let arrow_values = &eval_data.arrow_values[team_index(team)];
 
         for (i, arrow) in octi.arr_iter() {
             if *arrow == ArrowStatus::Active {
@@ -42,7 +47,7 @@ pub fn board_eval(board: &Board, eval_data: &EvalData) -> Value {
             }
         }
 
-        let position_matricies = &eval_data.position_matricies[team as usize];
+        let position_matricies = &eval_data.position_matricies[team_index(team)];
         *eval += position_matricies.get(&pos).unwrap();
     }
 
@@ -51,12 +56,13 @@ pub fn board_eval(board: &Board, eval_data: &EvalData) -> Value {
         let mut board = board.clone();
         board.set_turn(team);
 
-        for octi_mov in MoveOctiMoveIterator::new(&board) {
-            match octi_mov {
+        for octi_mov in new_move_octi_move_iterator(&board) {
+            match &octi_mov {
                 OctiMove::Move(pos, arrs) => {
                     let mut board_clone = board.clone();
 
                     let octi = board_clone.get_octi_by_pos(&pos).unwrap();
+                    let team = octi.team();
                     let octi_id = octi.id();
                     let preivous_pos = octi.pos();
 
@@ -64,7 +70,6 @@ pub fn board_eval(board: &Board, eval_data: &EvalData) -> Value {
 
                     let new_pos = board_clone.get_octi_by_id(&octi_id).unwrap().pos();
 
-                    let team = octi.team();
                     let eval = match team {
                         Team::Red => &mut red_eval,
                         Team::Green => &mut green_eval,
@@ -75,7 +80,7 @@ pub fn board_eval(board: &Board, eval_data: &EvalData) -> Value {
                     // (opponent team theoretically can do a move which will result in the win of the other, but an optimal opponent won't)
                     if let Some(game_winner) = winner(&board_clone) {
                         if game_winner == cur_team && game_winner == team {
-                            return team_win_value(game_winner);
+                            return Value::Win(game_winner);
                         }
                     }
 
@@ -94,20 +99,42 @@ pub fn board_eval(board: &Board, eval_data: &EvalData) -> Value {
     }
 
     let final_eval = red_eval - green_eval;
-    if final_eval == i32::MAX || final_eval == i32::MIN {
-        panic!("board evaluation that results in an integer limit");
-    } else {
-        final_eval
-    }
+    Value::Score(final_eval)
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct EvalData {
-    octi_value: Value,
-    arrow_values: [[Value; ARROWS_PER_OCTI]; TEAMS],
-    position_matricies: [Matrix<Value>; TEAMS],
-    simple_move_matricies: [Matrix<Value>; TEAMS],
-    jump_move_matricies: [Matrix<Value>; TEAMS],
+    octi_value: i32,
+    arrow_values: [[i32; ARROWS_PER_OCTI]; TEAMS],
+    position_matricies: [Matrix<i32>; TEAMS],
+    simple_move_matricies: [Matrix<i32>; TEAMS],
+    jump_move_matricies: [Matrix<i32>; TEAMS],
+}
+
+impl PartialOrd for Value {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(
+            match self {
+                Value::Win(team) => match team {
+                    Team::Red => Ordering::Greater,
+                    Team::Green => Ordering::Less,
+                },
+                Value::Score(score) => match other {
+                    Value::Win(other_team) => match other_team {
+                        Team::Red => Ordering::Less,
+                        Team::Green => Ordering::Greater,
+                    },
+                    Value::Score(other_score) => score.cmp(other_score),
+                }
+            }
+        )
+    }
+}
+
+impl Ord for Value {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(&other).unwrap()
+    }
 }
 
 impl EvalData {

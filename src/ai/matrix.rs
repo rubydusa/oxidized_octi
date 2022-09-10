@@ -13,33 +13,6 @@ pub struct Matrix<T> {
     height: usize,
 }
 
-impl<T: FromStr> Matrix<T>
-where
-    <T as FromStr>::Err: 'static + Error,
-{
-    pub fn from_csv<P: AsRef<Path>>(p: P) -> Result<Matrix<T>, Box<dyn Error>> {
-        let mut reader = csv::Reader::from_path(p)?;
-        let mut arr = Vec::<T>::new();
-        let mut height = 0;
-
-        for result in reader.records() {
-            let record = result?;
-            for item in record.iter() {
-                arr.push(item.parse()?);
-            }
-            height += 1;
-        }
-
-        if height == 0 {
-            height = 1;
-        }
-
-        let width = arr.len() / height;
-
-        Ok(Matrix { arr, height, width })
-    }
-}
-
 impl<T> Matrix<T> {
     // constructors
 
@@ -78,5 +51,32 @@ impl<T> Matrix<T> {
 
     fn construct_index(x: usize, y: usize, w: usize) -> usize {
         x + y * w
+    }
+}
+
+impl<T: FromStr> Matrix<T>
+where
+    <T as FromStr>::Err: 'static + Error,
+{
+    pub fn from_csv<P: AsRef<Path>>(p: P) -> Result<Matrix<T>, Box<dyn Error>> {
+        let mut reader = csv::Reader::from_path(p)?;
+        let mut arr = Vec::<T>::new();
+        let mut height = 0;
+
+        for result in reader.records() {
+            let record = result?;
+            for item in record.iter() {
+                arr.push(item.parse()?);
+            }
+            height += 1;
+        }
+
+        if height == 0 {
+            height = 1;
+        }
+
+        let width = arr.len() / height;
+
+        Ok(Matrix { arr, height, width })
     }
 }

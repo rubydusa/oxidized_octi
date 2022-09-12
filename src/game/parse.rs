@@ -25,7 +25,9 @@ impl FromStr for Action {
                 }
 
                 Ok(Action::Forward(
-                    args[1].parse().or(Err("Invalid forward argument"))?,
+                    args[1]
+                        .parse()
+                        .or_else(|_| Err("Invalid forward argument"))?,
                 ))
             }
             "backward" => {
@@ -33,11 +35,22 @@ impl FromStr for Action {
                     Err(format!("Invalid number of arguments: {}", args.len()))?;
                 }
 
-                Ok(Action::Forward(
-                    args[1].parse().or(Err("Invalid backward argument"))?,
+                Ok(Action::Backward(
+                    args[1]
+                        .parse()
+                        .or_else(|_| Err("Invalid backward argument"))?,
                 ))
             }
             "move" => Ok(Action::OctiMove(args[1..].join(" ").parse::<OctiMove>()?)),
+            "ai" => {
+                if args.len() != 2 {
+                    Err(format!("Invalid number of arguments: {}", args.len()))?;
+                }
+
+                Ok(Action::AI(
+                    args[1].parse().or_else(|_| Err("Invalid AI argument"))?,
+                ))
+            }
             _ => Err(format!("Unrecognized move type: {}", args[0])),
         }
     }

@@ -22,6 +22,7 @@ pub fn get_contexts_sorted(
         .collect::<Vec<_>>();
 
     contexts.sort();
+    contexts.reverse();
     contexts
 }
 
@@ -92,6 +93,7 @@ pub struct PriorityEvalData {
 }
 
 // an octi move with context (board state)
+#[derive(Clone)]
 pub struct OctiMoveContext {
     octi_move: OctiMove,
     board: Board,

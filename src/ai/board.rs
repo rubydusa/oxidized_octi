@@ -22,11 +22,11 @@ impl Board {
             .try_into()
             .unwrap();
 
-        let octis: [Option<Octi>; BOARD_WIDTH * BOARD_HEIGHT] =
-            octis.map(|x| match board.get_octi_by_pos(&Self::index_to_pos(x)) {
-                Some(octi) => Some(octi.clone()),
-                None => None,
-            });
+        let octis: [Option<Octi>; BOARD_WIDTH * BOARD_HEIGHT] = octis.map(|x| {
+            board
+                .get_octi_by_pos(&Self::index_to_pos(x))
+                .map(|y| y.clone())
+        });
 
         let mut arr_counts = [0; TEAMS];
         arr_counts[team_index(Team::Red)] = board.get_arr_count(&Team::Red).unwrap();
@@ -67,7 +67,7 @@ impl Board {
 
     // associated methods
     fn index_to_pos(index: usize) -> Position {
-        Position::new((index % BOARD_WIDTH) as i32, (index / BOARD_HEIGHT) as i32)
+        Position::new((index % BOARD_WIDTH) as i32, (index / BOARD_WIDTH) as i32)
     }
 
     fn pos_to_index(pos: &Position) -> usize {
@@ -133,7 +133,8 @@ impl BoardEventProcessor for Board {
                     *self.arr_counts.get_mut(team_index(team)).unwrap() -= 1;
                 }
                 BoardEvent::NewOctiPosition(pos, new_pos) => {
-                    let octi = self.take_octi_by_pos(pos).unwrap();
+                    let mut octi = self.take_octi_by_pos(pos).unwrap();
+                    octi.set_pos(*new_pos);
                     self.insert_octi_at_pos(new_pos, octi);
                 }
                 BoardEvent::OctiEaten(pos) => {

@@ -1,4 +1,5 @@
-mod board;
+pub mod board;
+
 mod eval;
 mod matrix;
 mod moveiter;
@@ -68,6 +69,10 @@ fn _minimax(
     );
 
     for context in all_contexts {
+        // don't return none in case all moves are absolute worse
+        if value_move.is_none() {
+            value_move = Some(context.clone().octi_move());
+        }
         // destructure prioritized
         let result = _minimax(
             context.board(),
@@ -188,24 +193,24 @@ pub struct MinimaxResult(BoardScore, Option<OctiMove>);
 // second is depth
 
 #[derive(Copy, Clone, Eq, PartialEq)]
-struct BoardScore(Value, u32);
+pub struct BoardScore(Value, u32);
 
 impl MinimaxResult {
-    fn score(&self) -> BoardScore {
+    pub fn score(&self) -> BoardScore {
         self.0
     }
 
-    fn octi_move(self) -> Option<OctiMove> {
+    pub fn octi_move(self) -> Option<OctiMove> {
         self.1
     }
 }
 
 impl BoardScore {
-    fn value(&self) -> Value {
+    pub fn value(&self) -> Value {
         self.0
     }
 
-    fn depth(&self) -> u32 {
+    pub fn depth(&self) -> u32 {
         self.1
     }
 

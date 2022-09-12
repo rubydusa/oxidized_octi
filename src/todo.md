@@ -1,2 +1,3 @@
 * change arrow from usize to u32 (makes more sense semantically)
-* change ai board score to use enum of Score: Value(i32, Team), Win(Team)
+* utils for parsing
+* press up key to restore last command

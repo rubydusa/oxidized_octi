@@ -116,8 +116,14 @@ impl PartialOrd for Value {
         Some(
             match self {
                 Value::Win(team) => match team {
-                    Team::Red => Ordering::Greater,
-                    Team::Green => Ordering::Less,
+                    Team::Red => match other {
+                        Value::Win(Team::Red) => Ordering::Equal,
+                        _ => Ordering::Greater,
+                    }
+                    Team::Green => match other {
+                        Value::Win(Team::Green) => Ordering::Equal,
+                        _ => Ordering::Less,
+                    },
                 },
                 Value::Score(score) => match other {
                     Value::Win(other_team) => match other_team {

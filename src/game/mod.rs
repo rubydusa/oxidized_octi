@@ -1,8 +1,10 @@
 mod parse;
 
-use super::board::Board;
-use super::board::BoardEventProcessor;
-use super::board::OctiMove;
+use std::error::Error;
+
+use super::ai::board;
+use super::ai::minimax;
+use super::board::{Board, BoardEventProcessor, OctiMove};
 
 // Aliases
 
@@ -16,6 +18,7 @@ pub enum Action {
     Forward(usize),
     Backward(usize),
     OctiMove(OctiMove),
+    AI(u32),
 }
 
 // Structs
@@ -70,6 +73,15 @@ impl Game {
         Ok(())
     }
 
+    pub fn ai(&mut self, depth: u32) -> Result<(), Box<dyn Error>> {
+        let board = board::Board::new(self.state());
+        let octi_move = minimax(&board, depth)?
+            .octi_move()
+            .ok_or("No possible moves from possition")?;
+        self.make_move(octi_move)?;
+        Ok(())
+    }
+
     pub fn process_action(&mut self, action: Action) -> Result<(), String> {
         match action {
             Action::Start => {
@@ -89,6 +101,7 @@ impl Game {
                 Ok(())
             }
             Action::OctiMove(octi_move) => self.make_move(octi_move),
+            Action::AI(depth) => self.ai(depth).map_err(|e| e.to_string()),
         }
     }
 

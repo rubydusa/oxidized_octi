@@ -22,11 +22,8 @@ impl Board {
             .try_into()
             .unwrap();
 
-        let octis: [Option<Octi>; BOARD_WIDTH * BOARD_HEIGHT] = octis.map(|x| {
-            board
-                .get_octi_by_pos(&Self::index_to_pos(x))
-                .map(|y| y.clone())
-        });
+        let octis: [Option<Octi>; BOARD_WIDTH * BOARD_HEIGHT] =
+            octis.map(|x| board.get_octi_by_pos(&Self::index_to_pos(x)).cloned());
 
         let mut arr_counts = [0; TEAMS];
         arr_counts[team_index(Team::Red)] = board.get_arr_count(&Team::Red).unwrap();
@@ -77,7 +74,11 @@ impl Board {
 
 impl Boardable for Board {
     fn get_octi_by_pos(&self, pos: &Position) -> Option<&Octi> {
-        self.octis.get(Self::pos_to_index(pos))?.as_ref()
+        if pos.x() < 0 || pos.y() < 0 {
+            None
+        } else {
+            self.octis.get(Self::pos_to_index(pos))?.as_ref()
+        }
     }
 
     fn get_octi_by_id(&self, id: &OctiID) -> Option<&Octi> {
@@ -138,7 +139,9 @@ impl BoardEventProcessor for Board {
                     self.insert_octi_at_pos(new_pos, octi);
                 }
                 BoardEvent::OctiEaten(pos) => {
-                    let octi = self.take_octi_by_pos(pos).unwrap();
+                    let octi = self.take_octi_by_pos(pos).unwrap_or_else(|| {
+                        panic!("{}", pos);
+                    });
 
                     let other_team = match octi.team() {
                         Team::Red => Team::Green,

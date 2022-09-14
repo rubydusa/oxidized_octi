@@ -1,7 +1,7 @@
 pub mod parse;
 
 use super::global::ARROWS_PER_OCTI;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::default::Default;
 use std::ops;
 
@@ -16,7 +16,7 @@ pub type OctiID = u32;
 // Enums
 //
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum OctiMove {
     Arrow(Position, Arrow),
     Move(Position, Vec<Arrow>),
@@ -452,6 +452,7 @@ pub trait BoardEventProcessor: Boardable {
 
                 // *3 in case every jump is eat + for every div
                 let mut board_events = Vec::with_capacity(arrs.len() * 3);
+                let mut eaten_octis = HashSet::new();
 
                 for arr in arrs {
                     if !octi.has_arr(arr) {
@@ -469,8 +470,10 @@ pub trait BoardEventProcessor: Boardable {
                     }
 
                     if let Some(in_between_octi) = self.get_octi_by_pos(&in_between_pos) {
-                        if in_between_octi.team() != team {
-                            board_events.push(BoardEvent::OctiEaten(in_between_pos))
+                        if in_between_octi.team() != team && !eaten_octis.contains(&in_between_pos)
+                        {
+                            board_events.push(BoardEvent::OctiEaten(in_between_pos));
+                            eaten_octis.insert(in_between_pos);
                         }
                     } else {
                         Err(format!("No in-between octi at: {:?}", in_between_pos))?;

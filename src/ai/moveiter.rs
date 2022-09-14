@@ -24,19 +24,18 @@ pub struct MoveOctiMoveIterator<'a, T: Iterator<Item = Position>> {
     check_stack: Vec<Vec<Arrow>>,
 }
 
-pub fn new_octi_move_iterator<'a>(
-    board: &'a Board,
-) -> OctiMoveIterator<'a, impl Iterator<Item = Position> + 'a, impl Iterator<Item = Position> + 'a>
-{
+pub fn new_octi_move_iterator(
+    board: &Board,
+) -> OctiMoveIterator<impl Iterator<Item = Position> + '_, impl Iterator<Item = Position> + '_> {
     OctiMoveIterator {
         arr_octi_move_iterator: new_arrow_octi_move_iterator(board),
         move_octi_move_iterator: new_move_octi_move_iterator(board),
     }
 }
 
-pub fn new_arrow_octi_move_iterator<'a>(
-    board: &'a Board,
-) -> ArrowOctiMoveIterator<'a, impl Iterator<Item = Position> + 'a> {
+pub fn new_arrow_octi_move_iterator(
+    board: &Board,
+) -> ArrowOctiMoveIterator<impl Iterator<Item = Position> + '_> {
     let turn = board.turn();
     ArrowOctiMoveIterator {
         board,
@@ -49,9 +48,9 @@ pub fn new_arrow_octi_move_iterator<'a>(
     }
 }
 
-pub fn new_move_octi_move_iterator<'a>(
-    board: &'a Board,
-) -> MoveOctiMoveIterator<'a, impl Iterator<Item = Position> + 'a> {
+pub fn new_move_octi_move_iterator(
+    board: &Board,
+) -> MoveOctiMoveIterator<impl Iterator<Item = Position> + '_> {
     let turn = board.turn();
 
     MoveOctiMoveIterator {
@@ -82,7 +81,7 @@ impl<'a, T: Iterator<Item = Position>> Iterator for ArrowOctiMoveIterator<'a, T>
 
     fn next(&mut self) -> Option<OctiMove> {
         loop {
-            if self.check_stack.len() == 0 {
+            if self.check_stack.is_empty() {
                 self.pos = self.positions.next()?;
                 self.check_stack = (0..ARROWS_PER_OCTI)
                     .map(|x| Arrow::new(x).unwrap())
@@ -103,7 +102,7 @@ impl<'a, T: Iterator<Item = Position>> Iterator for MoveOctiMoveIterator<'a, T> 
 
     fn next(&mut self) -> Option<OctiMove> {
         'main: loop {
-            if self.check_stack.len() == 0 {
+            if self.check_stack.is_empty() {
                 self.pos = self.positions.next()?;
                 self.check_stack = (0..ARROWS_PER_OCTI)
                     .map(|i| vec![Arrow::new(i).unwrap()])

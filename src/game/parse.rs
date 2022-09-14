@@ -1,7 +1,6 @@
 use super::super::board::OctiMove;
 use super::Action;
 
-use std::fmt::Display;
 use std::str::FromStr;
 
 // impl Display for Action
@@ -25,9 +24,7 @@ impl FromStr for Action {
                 }
 
                 Ok(Action::Forward(
-                    args[1]
-                        .parse()
-                        .or_else(|_| Err("Invalid forward argument"))?,
+                    args[1].parse().map_err(|_| "Invalid forward argument")?,
                 ))
             }
             "backward" => {
@@ -36,9 +33,7 @@ impl FromStr for Action {
                 }
 
                 Ok(Action::Backward(
-                    args[1]
-                        .parse()
-                        .or_else(|_| Err("Invalid backward argument"))?,
+                    args[1].parse().map_err(|_| "Invalid backward argument")?,
                 ))
             }
             "move" => Ok(Action::OctiMove(args[1..].join(" ").parse::<OctiMove>()?)),
@@ -48,7 +43,7 @@ impl FromStr for Action {
                 }
 
                 Ok(Action::AI(
-                    args[1].parse().or_else(|_| Err("Invalid AI argument"))?,
+                    args[1].parse().map_err(|_| "Invalid AI argument")?,
                 ))
             }
             _ => Err(format!("Unrecognized move type: {}", args[0])),

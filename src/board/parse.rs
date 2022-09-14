@@ -7,7 +7,7 @@ impl Display for OctiMove {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             OctiMove::Arrow(pos, arr) => {
-                write!(f, "arr {} {}", pos, arr.to_string())
+                write!(f, "arr {} {}", pos, arr)
             }
             OctiMove::Move(pos, arrs) => {
                 let mut arrs_s = String::new();

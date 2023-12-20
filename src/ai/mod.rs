@@ -5,8 +5,8 @@ mod matrix;
 mod moveiter;
 mod priority;
 
-use std::cmp::Ordering;
 use std::error::Error;
+use std::{cmp::Ordering, collections::HashMap};
 
 use super::board::{Boardable, OctiMove, Position, Team};
 
@@ -28,15 +28,22 @@ pub fn minimax(board: &Board, depth: u32) -> Result<MinimaxResult, Box<dyn Error
 
     let eval_data = EvalData::default()?;
     let priority_eval_data = PriorityEvalData::default()?;
+    let mut score_table = HashMap::new();
+    let mut nodes_visited = 0;
     let result = _minimax(
         board,
         0,
         depth,
         BoardScore(Value::Win(Team::Green), u32::MAX),
         BoardScore(Value::Win(Team::Red), u32::MAX),
+        &mut score_table,
+        &mut nodes_visited,
         &eval_data,
         &priority_eval_data,
     );
+
+    // for debugging
+    // println!("{}", nodes_visited);
 
     Ok(result)
 }
@@ -47,12 +54,24 @@ fn _minimax(
     target_depth: u32,
     alpha: BoardScore,
     beta: BoardScore,
+    score_table: &mut HashMap<Board, BoardScore>,
+    nodes_visited: &mut u32,
     eval_data: &EvalData,
     priority_eval_data: &PriorityEvalData,
 ) -> MinimaxResult {
+    *nodes_visited += 1;
     if depth == target_depth || winner(board).is_some() {
         return MinimaxResult(BoardScore(board_eval(board, eval_data), depth), None);
     }
+
+    if let Some(board_score) = score_table.get(board) {
+        // if the depth of the saved board is higher, it means it is deeper in the tree and thus
+        // more accurate
+        if board_score.depth() >= depth {
+            return MinimaxResult(board_score.clone(), None);
+        }
+    }
+    
 
     let (mut alpha, mut beta) = (alpha, beta);
     let turn = board.turn();
@@ -80,6 +99,8 @@ fn _minimax(
             target_depth,
             alpha,
             beta,
+            score_table,
+            nodes_visited,
             eval_data,
             priority_eval_data,
         );
@@ -114,6 +135,7 @@ fn _minimax(
         }
     }
 
+    score_table.insert(board.clone(), value);
     MinimaxResult(value, value_move)
 }
 

@@ -46,6 +46,9 @@ impl FromStr for Action {
                     args[1].parse().map_err(|_| "Invalid AI argument")?,
                 ))
             }
+            "overwrite" => {
+                Ok(Action::Ovewrite)
+            }
             _ => Err(format!("Unrecognized move type: {}", args[0])),
         }
     }

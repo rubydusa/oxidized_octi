@@ -19,6 +19,7 @@ pub enum Action {
     Backward(usize),
     OctiMove(OctiMove),
     AI(u32),
+    Ovewrite
 }
 
 // Structs
@@ -102,6 +103,10 @@ impl Game {
             }
             Action::OctiMove(octi_move) => self.make_move(octi_move),
             Action::AI(depth) => self.ai(depth).map_err(|e| e.to_string()),
+            Action::Ovewrite => {
+                self.overwrite_history();
+                Ok(())
+            }
         }
     }
 

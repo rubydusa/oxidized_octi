@@ -431,7 +431,7 @@ pub trait BoardEventProcessor: Boardable {
                 let mut next_pos = pos;
 
                 if arrs.len() == 1 {
-                    let (arr, _) = arrs[0];
+                    let (arr, is_capture) = arrs[0];
                     if !octi.has_arr(&arr) {
                         Err(format!("Arrow {:?} does not exist on {:?}", arr, pos))?;
                     }
@@ -440,7 +440,7 @@ pub trait BoardEventProcessor: Boardable {
                     let consider_position = next_pos + direction;
                     let consider_position_octi = self.get_octi_by_pos(&consider_position);
 
-                    if self.in_bounds(&consider_position) && consider_position_octi.is_none() {
+                    if self.in_bounds(&consider_position) && consider_position_octi.is_none() && !is_capture {
                         return Ok(vec![BoardEvent::NewOctiPosition(pos, consider_position)]);
                     }
                 }

@@ -1,6 +1,4 @@
-use std::collections::HashSet;
-
-use super::super::board::{Arrow, BoardEvent, BoardEventProcessor, Boardable, OctiMove, Position};
+use super::super::board::{Arrow, BoardEventProcessor, Boardable, OctiMove, Position};
 use super::board::Board;
 
 use super::super::global::ARROWS_PER_OCTI;
@@ -121,13 +119,14 @@ impl<'a, T: Iterator<Item = Position>> Iterator for MoveOctiMoveIterator<'a, T> 
             let consider = OctiMove::Move(self.pos, chain.clone());
             if let Err(_) = self.board.move_events(&consider) {
                 continue 'main;
-            } 
+            }
 
             for i in 0..ARROWS_PER_OCTI {
                 let mut c = chain.clone();
-                let arr = Arrow::new(i).unwrap();
-                c.push((arr, false));
-                c.push((arr, true));
+                c.push((Arrow::new(i).unwrap(), false));
+                self.check_stack.push(c);
+                let mut c = chain.clone();
+                c.push((Arrow::new(i).unwrap(), true));
                 self.check_stack.push(c);
             }
             return Some(consider);

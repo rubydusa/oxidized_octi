@@ -12,9 +12,12 @@ impl Display for OctiMove {
             OctiMove::Move(pos, arrs) => {
                 let mut arrs_s = String::new();
 
-                for arr in arrs {
+                for (arr, is_capture) in arrs {
                     arrs_s.push(' ');
                     arrs_s.push_str(&arr.to_string());
+                    if *is_capture {
+                        arrs_s.push('x');
+                    }
                 }
 
                 write!(f, "mov {}{}", pos, arrs_s)
@@ -48,7 +51,14 @@ impl FromStr for OctiMove {
 
                 let mut arrs = Vec::with_capacity(args.len() - 2);
                 for arr in args[2..].iter() {
-                    arrs.push(arr.parse()?);
+                    let mut arr_chars = arr.chars();
+                    let last = arr_chars.next_back().expect("args' arr to not be empty");
+                    let is_capture = last == 'x';
+                    let arr_s = if is_capture { arr_chars.as_str() } else { arr };
+
+                    let arr: Arrow = arr_s.parse()?;
+
+                    arrs.push((arr, is_capture));
                 }
 
                 Ok(OctiMove::Move(args[1].parse()?, arrs))

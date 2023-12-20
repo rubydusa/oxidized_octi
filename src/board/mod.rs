@@ -19,14 +19,14 @@ pub type OctiID = u32;
 #[derive(Clone, PartialEq, Eq)]
 pub enum OctiMove {
     Arrow(Position, Arrow),
-    Move(Position, Vec<Arrow>),
+    Move(Position, Vec<(Arrow, bool)>),
 }
 
 #[derive(Clone)]
 pub enum BoardEvent {
     NewArrow(Position, Arrow),
     NewOctiPosition(Position, Position),
-    OctiEaten(Position),
+    OctiEaten(Position, Team),
     Div, // optional divider signifying end of intermidiary move
 }
 
@@ -132,16 +132,11 @@ impl BoardEventProcessor for Board {
                     let octi = self.get_octi_by_id_mut(&id).unwrap();
                     octi.set_pos(*new_pos);
                 }
-                BoardEvent::OctiEaten(pos) => {
+                BoardEvent::OctiEaten(pos, receiving_team) => {
                     let octi_id = self.pos_indexer.remove(pos).unwrap();
                     let octi = self.octis.remove(&octi_id).unwrap();
 
-                    let other_team = match octi.team() {
-                        Team::Red => Team::Green,
-                        Team::Green => Team::Red,
-                    };
-
-                    *self.arr_counts.get_mut(&other_team).unwrap() += octi.arr_count();
+                    *self.arr_counts.get_mut(receiving_team).unwrap() += octi.arr_count();
                 }
                 BoardEvent::Div => {}
             }
@@ -436,12 +431,12 @@ pub trait BoardEventProcessor: Boardable {
                 let mut next_pos = pos;
 
                 if arrs.len() == 1 {
-                    let arr = arrs[0];
+                    let (arr, _) = arrs[0];
                     if !octi.has_arr(&arr) {
                         Err(format!("Arrow {:?} does not exist on {:?}", arr, pos))?;
                     }
 
-                    let direction = arrs[0].direction();
+                    let direction = arr.direction();
                     let consider_position = next_pos + direction;
                     let consider_position_octi = self.get_octi_by_pos(&consider_position);
 
@@ -452,9 +447,9 @@ pub trait BoardEventProcessor: Boardable {
 
                 // *3 in case every jump is eat + for every div
                 let mut board_events = Vec::with_capacity(arrs.len() * 3);
-                let mut eaten_octis = HashSet::new();
+                let mut jumped_over_octis = HashSet::new();
 
-                for arr in arrs {
+                for (arr, is_capture) in arrs {
                     if !octi.has_arr(arr) {
                         Err(format!("Arrow {:?} does not exist on {:?}", arr, pos))?;
                     }
@@ -463,17 +458,21 @@ pub trait BoardEventProcessor: Boardable {
 
                     let previous_pos = next_pos;
                     let in_between_pos = next_pos + direction;
+                    // jumping over the same octi is not allowed
+                    if jumped_over_octis.contains(&in_between_pos) {
+                        Err(format!("Jumped already over octi: {:?}", in_between_pos))?;
+                    }
+                    jumped_over_octis.insert(in_between_pos);
+
                     next_pos = next_pos + direction * 2;
 
                     if !self.in_bounds(&next_pos) {
                         Err(format!("Positions not in bounds: {:?}", next_pos))?;
                     }
 
-                    if let Some(in_between_octi) = self.get_octi_by_pos(&in_between_pos) {
-                        if in_between_octi.team() != team && !eaten_octis.contains(&in_between_pos)
-                        {
-                            board_events.push(BoardEvent::OctiEaten(in_between_pos));
-                            eaten_octis.insert(in_between_pos);
+                    if let Some(_) = self.get_octi_by_pos(&in_between_pos) {
+                        if *is_capture {
+                            board_events.push(BoardEvent::OctiEaten(in_between_pos, team));
                         }
                     } else {
                         Err(format!("No in-between octi at: {:?}", in_between_pos))?;

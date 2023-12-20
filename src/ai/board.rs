@@ -138,17 +138,12 @@ impl BoardEventProcessor for Board {
                     octi.set_pos(*new_pos);
                     self.insert_octi_at_pos(new_pos, octi);
                 }
-                BoardEvent::OctiEaten(pos) => {
+                BoardEvent::OctiEaten(pos, receiving_team) => {
                     let octi = self.take_octi_by_pos(pos).unwrap_or_else(|| {
                         panic!("{}", pos);
                     });
 
-                    let other_team = match octi.team() {
-                        Team::Red => Team::Green,
-                        Team::Green => Team::Red,
-                    };
-
-                    *self.arr_counts.get_mut(team_index(other_team)).unwrap() += octi.arr_count();
+                    *self.arr_counts.get_mut(team_index(*receiving_team)).unwrap() += octi.arr_count();
                 }
                 BoardEvent::Div => {}
             }

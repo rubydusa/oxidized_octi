@@ -21,7 +21,7 @@ pub struct MoveOctiMoveIterator<'a, T: Iterator<Item = Position>> {
     board: &'a Board,
     pos: Position,
     positions: T,
-    check_stack: Vec<Vec<Arrow>>,
+    check_stack: Vec<Vec<(Arrow, bool)>>,
 }
 
 pub fn new_octi_move_iterator(
@@ -105,36 +105,29 @@ impl<'a, T: Iterator<Item = Position>> Iterator for MoveOctiMoveIterator<'a, T> 
             if self.check_stack.is_empty() {
                 self.pos = self.positions.next()?;
                 self.check_stack = (0..ARROWS_PER_OCTI)
-                    .map(|i| vec![Arrow::new(i).unwrap()])
+                    .map(|i| {
+                        let arr = Arrow::new(i).unwrap();
+                        vec![
+                            vec![(arr, false)],
+                            vec![(arr, true)]
+                        ]
+                     })
+                    .flatten()
                     .collect::<Vec<_>>();
             }
 
             let chain = self.check_stack.pop().unwrap();
 
             let consider = OctiMove::Move(self.pos, chain.clone());
-            if let Ok(move_events) = self.board.move_events(&consider) {
-                let len = chain.len();
-                // len <= 3 impossible repetition
-                if len > 4 {
-                    let mut already_checked = HashSet::<Board>::with_capacity(len);
-                    let mut local_board = self.board.clone();
-
-                    for events in move_events.split(|x| matches!(x, BoardEvent::Div)) {
-                        local_board.process_events(events);
-                        if already_checked.contains(&local_board) {
-                            continue 'main;
-                        } else {
-                            already_checked.insert(local_board.clone());
-                        }
-                    }
-                }
-            } else {
+            if let Err(_) = self.board.move_events(&consider) {
                 continue 'main;
-            }
+            } 
 
             for i in 0..ARROWS_PER_OCTI {
                 let mut c = chain.clone();
-                c.push(Arrow::new(i).unwrap());
+                let arr = Arrow::new(i).unwrap();
+                c.push((arr, false));
+                c.push((arr, true));
                 self.check_stack.push(c);
             }
             return Some(consider);

@@ -68,11 +68,11 @@ fn priority_eval(
                     priority += priority_eval_data.has_moved_value;
                 }
 
-                let octis_count_before = board.octis().count() as u32;
-                let octis_count_after = (&next_board).octis().count() as u32;
+                let enemy_octis_count_before = board.octis().filter(|x| x.team() != team).count() as u32;
+                let enemy_octis_count_after = (&next_board).octis().filter(|x| x.team() != team).count() as u32;
 
                 priority +=
-                    (octis_count_before - octis_count_after) * priority_eval_data.kill_value;
+                    (enemy_octis_count_before - enemy_octis_count_after) * priority_eval_data.kill_value;
             }
         }
     }

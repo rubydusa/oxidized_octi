@@ -56,7 +56,7 @@ pub struct Board {
     next_id: OctiID,
 }
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
 pub struct Octi {
     id: OctiID,
     team: Team,
@@ -210,6 +210,10 @@ impl Octi {
 
     pub fn pos(&self) -> Position {
         self.pos
+    }
+
+    pub fn arrs(&self) -> [ArrowStatus; ARROWS_PER_OCTI] {
+        self.arrs
     }
 
     pub fn has_arr(&self, arr: &Arrow) -> bool {

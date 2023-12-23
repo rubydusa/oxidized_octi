@@ -40,6 +40,54 @@ impl Board {
         self.octis.iter().filter_map(|x| x.as_ref())
     }
 
+    pub fn horizontal_flip(&self) -> Board {
+        Board {
+            turn: self.turn,
+            octis: (0..BOARD_WIDTH * BOARD_HEIGHT).map(|i| {
+                let pos = Self::index_to_pos(i);
+                let new_index = Self::pos_to_index(&Position::new(BOARD_WIDTH as i32 - pos.x() - 1, pos.y()));
+                self.octis[new_index]
+            }).collect::<Vec<_>>().try_into().unwrap(),
+            arr_counts: self.arr_counts
+        }
+    }
+
+    pub fn vertical_flip(&self) -> Board {
+        Board {
+            turn: self.turn,
+            octis: (0..BOARD_WIDTH * BOARD_HEIGHT).map(|i| {
+                let pos = Self::index_to_pos(i);
+                let new_index = Self::pos_to_index(&Position::new(pos.x(), BOARD_HEIGHT as i32 - pos.y() - 1));
+                self.octis[new_index]
+            }).collect::<Vec<_>>().try_into().unwrap(),
+            arr_counts: self.arr_counts
+        }
+    }
+
+    pub fn switch_colors(&mut self) {
+        self.turn = match self.turn {
+            Team::Red => Team::Green,
+            Team::Green => Team::Red,
+        };
+
+        self.octis.iter_mut().for_each(|cell| {
+            match cell {
+                Some(octi) => {
+                    *octi = Octi::new(
+                        octi.id(),
+                        match octi.team() {
+                            Team::Red => Team::Green,
+                            Team::Green => Team::Red
+                        },
+                        octi.pos(),
+                        octi.arrs()
+                    )
+                },
+                None => {},
+            }
+        })
+    }
+
     // mutability functions
     fn get_octi_by_pos_mut(&mut self, pos: &Position) -> Option<&mut Octi> {
         if let Some(mut_cell) = self.octis.get_mut(Self::pos_to_index(pos)) {

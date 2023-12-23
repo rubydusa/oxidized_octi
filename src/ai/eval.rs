@@ -3,6 +3,7 @@ use std::cmp::Ordering;
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
+use std::ops::Neg;
 
 use super::super::board::{ArrowStatus, BoardEventProcessor, Boardable, OctiMove, Team};
 use super::super::global::ARROWS_PER_OCTI;
@@ -140,6 +141,20 @@ impl PartialOrd for Value {
 impl Ord for Value {
     fn cmp(&self, other: &Self) -> Ordering {
         self.partial_cmp(&other).unwrap()
+    }
+}
+
+impl Neg for Value {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        match self {
+            Value::Score(i) => Value::Score(-i),
+            Value::Win(t) => match t {
+                Team::Red => Value::Win(Team::Green),
+                Team::Green => Value::Win(Team::Red),
+            }
+        }
     }
 }
 

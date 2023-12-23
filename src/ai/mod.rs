@@ -7,6 +7,7 @@ mod priority;
 
 use std::error::Error;
 use std::{cmp::Ordering, collections::HashMap};
+use std::ops::Neg;
 
 use super::board::{Boardable, OctiMove, Position, Team};
 
@@ -71,7 +72,6 @@ fn _minimax(
             return MinimaxResult(board_score.clone(), None);
         }
     }
-    
 
     let (mut alpha, mut beta) = (alpha, beta);
     let turn = board.turn();
@@ -136,6 +136,15 @@ fn _minimax(
     }
 
     score_table.insert(board.clone(), value);
+    score_table.insert(board.horizontal_flip(), value);
+    // not sure yet if this part checks out, need to review later
+    //
+    // let mut opposite_colors = board.vertical_flip();
+    // opposite_colors.switch_colors();
+    //
+    // score_table.insert(opposite_colors, -value);
+    // score_table.insert(opposite_colors.horizontal_flip(), -value);
+
     MinimaxResult(value, value_move)
 }
 
@@ -250,5 +259,13 @@ impl PartialOrd for BoardScore {
 impl Ord for BoardScore {
     fn cmp(&self, other: &Self) -> Ordering {
         self.0.cmp(&other.0)
+    }
+}
+
+impl Neg for BoardScore {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        BoardScore(-self.0, self.1)
     }
 }

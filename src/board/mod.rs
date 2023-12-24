@@ -244,6 +244,13 @@ impl Octi {
     pub fn set_pos(&mut self, pos: Position) {
         self.pos = pos;
     }
+
+    // modification
+
+    pub fn horizontal_flip(&mut self) {
+        let flip_mapping = [4, 3, 2, 1, 0, 7, 6, 5];
+        self.arrs = flip_mapping.map(|i| self.arrs[i]);
+    }
 }
 
 impl Arrow {

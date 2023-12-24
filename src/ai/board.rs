@@ -46,7 +46,11 @@ impl Board {
             octis: (0..BOARD_WIDTH * BOARD_HEIGHT).map(|i| {
                 let pos = Self::index_to_pos(i);
                 let new_index = Self::pos_to_index(&Position::new(BOARD_WIDTH as i32 - pos.x() - 1, pos.y()));
-                self.octis[new_index]
+                let octi = self.octis[new_index];
+                if let Some(mut octi) = octi {
+                    octi.flip();
+                }
+                octi
             }).collect::<Vec<_>>().try_into().unwrap(),
             arr_counts: self.arr_counts
         }
